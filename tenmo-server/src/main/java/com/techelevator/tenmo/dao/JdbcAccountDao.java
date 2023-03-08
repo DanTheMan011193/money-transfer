@@ -13,14 +13,19 @@ import java.util.List;
 
 @Component
 public class JdbcAccountDao implements AccountDao{
-    JdbcTemplate jdbcTemplate = new JdbcTemplate();
+    private JdbcTemplate jdbcTemplate;
+
+    public JdbcAccountDao(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     @Override
     public Account viewCurrentBalance(int id) {
 
         Account account = new Account();
-        String sql = "SELECT balance\n" +
-                "\tFROM public.account";
+        String sql = "SELECT balance, user_id, account_id " +
+                " FROM public.account " +
+                " WHERE user_id = ?";
        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, id);
        if (results.next()){
            account = mapRowToAccount(results);

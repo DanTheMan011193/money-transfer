@@ -16,6 +16,7 @@ import com.techelevator.tenmo.security.jwt.TokenProvider;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.security.Principal;
 import java.util.List;
 
 /**
@@ -24,10 +25,12 @@ import java.util.List;
 @RestController
 public class AccountController {
 
+
     private UserDao userDao;
     private AccountDao accountDao;
 
-    public AccountController(UserDao userDao) {
+    public AccountController(UserDao userDao, AccountDao accountDao) {
+        this.accountDao = accountDao;
         this.userDao = userDao;
     }
 
@@ -36,8 +39,9 @@ public class AccountController {
         return userDao.findAll();
     }
 
-    @RequestMapping(path = "/account/{id}", method = RequestMethod.GET)
-    public Account viewCurrentBalance(@PathVariable int id){
+    @RequestMapping(path = "/account", method = RequestMethod.GET)
+    public Account viewCurrentBalance(Principal principal){
+        int id = userDao.findByUsername(principal.getName()).getId();
 
         return accountDao.viewCurrentBalance(id);
     }
