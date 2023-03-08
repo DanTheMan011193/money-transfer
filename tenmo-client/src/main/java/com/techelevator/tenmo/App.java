@@ -1,6 +1,7 @@
 package com.techelevator.tenmo;
 
 import com.techelevator.tenmo.model.AuthenticatedUser;
+import com.techelevator.tenmo.model.User;
 import com.techelevator.tenmo.model.UserCredentials;
 import com.techelevator.tenmo.services.AuthenticationService;
 import com.techelevator.tenmo.services.ConsoleService;
@@ -84,6 +85,8 @@ public class App {
         }
     }
 
+
+
 	private void viewCurrentBalance() {
 		// TODO Auto-generated method stub
 		
@@ -100,6 +103,8 @@ public class App {
 	}
 
 	private void sendBucks() {
+        User[] User = consoleService.printUser();
+        consoleService.printUser(User);
 		// TODO Auto-generated method stub
 		
 	}

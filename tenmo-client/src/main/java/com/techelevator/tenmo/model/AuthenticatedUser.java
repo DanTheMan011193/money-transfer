@@ -1,5 +1,8 @@
 package com.techelevator.tenmo.model;
 
+
+import org.springframework.web.bind.annotation.RestController;
+
 public class AuthenticatedUser {
 	
 	private String token;
