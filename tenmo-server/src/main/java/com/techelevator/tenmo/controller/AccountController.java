@@ -9,11 +9,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.techelevator.tenmo.dao.UserDao;
 import com.techelevator.tenmo.security.jwt.TokenProvider;
@@ -40,9 +36,10 @@ public class AccountController {
         return userDao.findAll();
     }
 
-    @RequestMapping(path = "/account", method = RequestMethod.GET)
-    public Account viewCurrentBalance(){
-        return accountDao.viewCurrentBalance();
+    @RequestMapping(path = "/account/{id}", method = RequestMethod.GET)
+    public Account viewCurrentBalance(@PathVariable int id){
+
+        return accountDao.viewCurrentBalance(id);
     }
 
 
