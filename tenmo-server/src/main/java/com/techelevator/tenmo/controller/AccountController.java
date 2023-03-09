@@ -46,6 +46,16 @@ public class AccountController {
         return accountDao.viewCurrentBalance(id);
     }
 
+    @RequestMapping(path = "/transfer", method = RequestMethod.POST)
+    public Transfer newTransfer(@RequestBody Transfer transfer){
+        return accountDao.newTransfer(transfer);
+
+//    @RequestMapping(path = "transfer/{id}", method = RequestMethod.GET)
+//            public Transfer getTransferById(){
+//        }
+
+    }
+
 
 
 
