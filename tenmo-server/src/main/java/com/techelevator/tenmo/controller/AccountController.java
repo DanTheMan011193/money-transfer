@@ -39,25 +39,76 @@ public class AccountController {
         return userDao.findAll();
     }
 
+    @RequestMapping(path = "/users/{id}", method = RequestMethod.GET)
+    public User listUserById(@PathVariable int id) {
+        return userDao.getUserById(id);
+    }
+
     @RequestMapping(path = "/account", method = RequestMethod.GET)
     public Account viewCurrentBalance(Principal principal){
         int id = userDao.findByUsername(principal.getName()).getId();
-
         return accountDao.viewCurrentBalance(id);
     }
 
     @RequestMapping(path = "/transfer", method = RequestMethod.POST)
     public Transfer newTransfer(@RequestBody Transfer transfer){
         return accountDao.newTransfer(transfer);
+    }
+
+    @RequestMapping(path = "/transfer/{id}", method = RequestMethod.PUT)
+    public Transfer newTransferUpdateAccount(@RequestBody Transfer transfer) {
+        return accountDao.newTransfer(transfer);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //    @RequestMapping(path = "transfer/{id}", method = RequestMethod.GET)
 //            public Transfer getTransferById(){
 //        }
 
-    }
 
 
 
 
 
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

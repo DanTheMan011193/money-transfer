@@ -7,11 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 
-import javax.sql.DataSource;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-
 
 
 @Component
@@ -38,49 +34,31 @@ public class JdbcAccountDao implements AccountDao{
         return account;
     }
 
-
-
-
-
-
-//    @Override
-//    public Account transfer(int from, Transfer transfer) {
-//
-//
-////        String sql = "select account_id from account where user_id = ?";
-////        SqlRowSet fromUser = jdbcTemplate.queryForRowSet(sql, from);
-////        SqlRowSet toUser = jdbcTemplate.queryForRowSet(sql, transfer.getAccountTo());
-////        int accountTo;
-////        int accountFrom;
-////        if (fromUser.next()){
-////             accountFrom = fromUser.getInt("account_id");
-////        }
-////        if (toUser.next()){
-////            accountTo = toUser.getInt("account_id");
-////        }
-//
-//            return null;
-//    }
-
-
+    private Boolean viewTransAmount(int id, BigDecimal amount) {
+        Boolean result = false;
+        Account account = new Account();
+        String sql = "SELECT (balance > ?) as XferLessThanBalance\n" +
+                "FROM account\n" +
+                "Where user_id = ?";
+        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, amount.doubleValue(), id);
+        if (results.next()){
+            result = results.getBoolean("XferLessThanBalance");
+        }
+        return result;
+    }
 
     @Override
     public Transfer newTransfer(Transfer transfer) {
 
-        //needs to be more than 0
         if (transfer.getAmount().compareTo(BigDecimal.ZERO) <= 0){
             throw new IllegalArgumentException("Cannot be 0 or a negative amount");
         }
-        //user cant send to themself
         if (transfer.getAccountTo() == transfer.getAccountFrom()){
             throw new IllegalArgumentException("You can't send money to yourself");
         }
-        //cant send more than current balance
-//        if ( ((viewCurrentBalance(transfer.getAccountFrom()).getBalance()).compareTo(transfer.getAmount()) > 0
-//        )){
-//                throw new IllegalArgumentException("You broke");
-//        }
-
+        if (viewTransAmount(transfer.getAccountFrom(), transfer.getAmount())){
+            throw new IllegalArgumentException("You CANNOT SEND MORE MONEY THAN BALANCE");
+        }
         String insertSql = "INSERT INTO public.transfer(\n" +
                 "\ttransfer_type_id, transfer_status_id, account_from, account_to, amount)\n" +
                 "\tVALUES (?, ?, ?, ?, ?) RETURNING transfer_id";
@@ -89,9 +67,9 @@ public class JdbcAccountDao implements AccountDao{
                 transfer.getTransferTypeId(), transfer.getTransferStatusId(),
                 transfer.getAccountFrom(), transfer.getAccountTo(), transfer.getAmount());
 
+
         return getTransferById(newTransferId);
     }
-
 
     @Override
     public Transfer getTransferById(Integer newTransferId) {
@@ -99,21 +77,44 @@ public class JdbcAccountDao implements AccountDao{
         String sql = "select transfer_id, transfer_type_id, transfer_status_id, account_from, account_to, amount " +
                 "from transfer where transfer_id = ?";
         SqlRowSet results = jdbcTemplate.queryForRowSet(sql, newTransferId);
-
         if (results.next()){
             transfer = mapRowToTransfer(results);
         }
         return transfer;
     }
-
-
-    @Override
-    public void updateBalance(Account account){
+    //UPDATES BALANCE OF TO ACCOUNT IN XFER TABLE
+    private void addBalance(int accountId, BigDecimal transferAmount){
         String sql = "UPDATE public.account\n" +
                 "\tSET balance=?\n" +
                 "\tWHERE account_id = ?";
-        jdbcTemplate.update(sql, account.getBalance(), account.getAccountId());
+        BigDecimal currentBalance = account.getBalance();
+        BigDecimal updatedBalance = (currentBalance.add(transferAmount));
+
+        jdbcTemplate.update(sql, updatedBalance, account.getAccountId());
     }
+    //UPDATES BALANCE OF FROM ACCOUNT IN XFER TABLE
+    private void subtractBalance(int accountId, BigDecimal transferAmount){
+        String sql = "UPDATE public.account\n" +
+                "\tSET balance=?\n" +
+                "\tWHERE account_id = ?";
+        BigDecimal currentBalance = account.getBalance();
+        BigDecimal updatedBalance = (currentBalance.subtract(transferAmount));
+
+        jdbcTemplate.update(sql, updatedBalance, account.getAccountId());
+    }
+    // UPDATES ACCOUNT BALANCE IN ACCOUNT TABLE
+    private void updateBalance(int accountId, BigDecimal transferAmount){
+        String sql = "UPDATE public.account\n" +
+                "\tSET balance= ?\n" +
+                "\tWHERE account_id = ?";
+        BigDecimal fromAmount = subtractBalance(accountId,transferAmount);
+        addBalance(accountId,transferAmount);
+        jdbcTemplate.update(sql, account);
+
+
+    }
+
+
 
 
     private Account mapRowToAccount(SqlRowSet rs) {
@@ -124,7 +125,6 @@ public class JdbcAccountDao implements AccountDao{
 
         return account;
     }
-
     private Transfer mapRowToTransfer(SqlRowSet rs) {
         Transfer transfer = new Transfer();
         transfer.setTransferId(rs.getInt("transfer_id"));
@@ -137,5 +137,19 @@ public class JdbcAccountDao implements AccountDao{
         return transfer;
     }
 
-
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

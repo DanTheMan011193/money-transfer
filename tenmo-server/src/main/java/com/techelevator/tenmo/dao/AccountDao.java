@@ -15,8 +15,9 @@ public interface AccountDao {
     Transfer newTransfer(Transfer transfer);
     Transfer getTransferById(Integer newTransferId);
 
-    public void updateBalance(Account account);
+
+   // void addBalance(Account account, BigDecimal transferAmount);
 
 
-
+   // void subtractBalance(Account account, BigDecimal transferAmount);
 }

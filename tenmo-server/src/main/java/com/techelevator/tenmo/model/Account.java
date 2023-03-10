@@ -14,6 +14,10 @@ public class Account {
         this.balance = balance;
     }
 
+    public void setBalance(BigDecimal balance) {
+        this.balance = balance;
+    }
+
     public Account() {
 
     }
@@ -38,7 +42,6 @@ public class Account {
         this.userId = userId;
     }
 
-    public void setBalance(BigDecimal balance) {
-        this.balance = balance;
+
     }
-}
+
