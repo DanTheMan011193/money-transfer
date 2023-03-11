@@ -103,13 +103,22 @@ public class JdbcAccountDao implements AccountDao{
         jdbcTemplate.update(sql, updatedBalance, account.getAccountId());
     }
     // UPDATES ACCOUNT BALANCE IN ACCOUNT TABLE
-    private void updateBalance(int accountId, BigDecimal transferAmount){
-        String sql = "UPDATE public.account\n" +
-                "\tSET balance= ?\n" +
-                "\tWHERE account_id = ?";
-        BigDecimal fromAmount = subtractBalance(accountId,transferAmount);
-        addBalance(accountId,transferAmount);
-        jdbcTemplate.update(sql, account);
+    @Override
+    public void updateBalance(int fromAccount, int toAccount, BigDecimal transferAmount){
+        String sql = "BEGIN TRANSACTION;\n" +
+                "UPDATE account\n" +
+                "SET balance = balance - ?\n" +
+                "WHERE account_id = ?;\n" +
+                "\n" +
+                "UPDATE account\n" +
+                "SET balance = balance + ?\n" +
+                "WHERE account_id = ?;\n" +
+                "\n" +
+                "COMMIT";
+//        //BigDecimal fromAmount = subtractBalance(accountId,transferAmount);
+//        subtractBalance(fromAccount.getAccountId(), transferAmount);
+//        addBalance(toAccount.getAccountId(),transferAmount);
+        jdbcTemplate.update(sql, transferAmount, fromAccount, transferAmount, toAccount);
 
 
     }

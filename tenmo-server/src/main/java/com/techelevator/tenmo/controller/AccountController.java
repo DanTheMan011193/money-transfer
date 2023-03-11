@@ -52,13 +52,15 @@ public class AccountController {
 
     @RequestMapping(path = "/transfer", method = RequestMethod.POST)
     public Transfer newTransfer(@RequestBody Transfer transfer){
-        return accountDao.newTransfer(transfer);
+        Transfer transferResult = accountDao.newTransfer(transfer);
+
+        accountDao.updateBalance(transfer.getAccountFrom(), transfer.getAccountTo(),
+                transfer.getAmount());
+        return transferResult;
+
     }
 
-    @RequestMapping(path = "/transfer/{id}", method = RequestMethod.PUT)
-    public Transfer newTransferUpdateAccount(@RequestBody Transfer transfer) {
-        return accountDao.newTransfer(transfer);
-    }
+
 }
 
 
