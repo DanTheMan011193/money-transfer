@@ -42,6 +42,7 @@ public class App {
                 handleRegister();
             } else if (menuSelection == 2) {
                 handleLogin();
+                accountService.setAuthToken(currentUser.getToken());
             } else if (menuSelection != 0) {
                 System.out.println("Invalid Selection");
                 consoleService.pause();
@@ -102,6 +103,15 @@ public class App {
 	}
 
 	private void viewTransferHistory() {
+
+
+
+        Transfer[] transferList = accountService.listTransfers(currentUser.getToken());
+        for (Transfer transfer : transferList) {
+            System.out.println(transfer);
+        }
+
+
 		// TODO Auto-generated method stub
 		
 	}
@@ -112,17 +122,28 @@ public class App {
 	}
 
 	private void sendBucks() {
-
         User[] userList = accountService.listUsers();
-        for (User user : userList){
+        for (User user : userList) {
             System.out.println(user);
         }
-          int transferToUserId = consoleService.promptForInt("Enter the id of the person you would like to send money to: ");
+        int transferToUserId = consoleService.promptForInt("Enter the id of the person you would like to send money to: ");
         BigDecimal transferAmount = consoleService.promptForBigDecimal("Enter the amount to transfer: ");
-        accountService.transferMoney(transfer);
-//        consoleService.promptForString("Enter the id of the person you would like to send money to: ");
-//        accountService.transferMoney(currentUser.getToken());
-		// TODO Auto-generated method stub
+
+        Transfer transfer = new Transfer();
+        transfer.setTransferTypeId(2);
+        transfer.setTransferStatusId(2);
+        transfer.setAccountFrom(currentUser.getUser().getId());
+        transfer.setAccountTo(transferToUserId);
+        transfer.setAmount(transferAmount);
+
+        Transfer newTransfer = accountService.transferMoney(currentUser.getToken(),transfer);
+        if (newTransfer != null) {
+            System.out.println("Transfer successful!");
+        } else {
+            System.out.println("Transfer failed.");
+        }
+
+        // TODO Auto-generated method stub
     }
 
 	private void requestBucks() {

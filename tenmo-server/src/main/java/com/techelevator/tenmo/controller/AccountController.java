@@ -17,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -58,6 +59,13 @@ public class AccountController {
                 transfer.getAmount());
         return transferResult;
 
+    }
+
+    @RequestMapping(path = "/transfer", method = RequestMethod.GET)
+    public List<Transfer> transfers(Principal principal){
+        List<Transfer> returnedTransfers = new ArrayList<>();
+        int fromAccount = userDao.findByUsername(principal.getName()).getId();
+        return accountDao.getAllTransactions(fromAccount);
     }
 
 

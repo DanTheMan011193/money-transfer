@@ -1,22 +1,27 @@
 package com.techelevator.tenmo.services;
 
 import com.techelevator.tenmo.model.Account;
+import com.techelevator.tenmo.model.AuthenticatedUser;
 import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.User;
 import com.techelevator.util.BasicLogger;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
-import java.math.BigDecimal;
-
 public class AccountService {
     private final String baseUrl;
     private final RestTemplate restTemplate = new RestTemplate();
+    private AuthenticatedUser currentUser;
+
+
+
+    private String authToken = null;
+
+    public void setAuthToken(String authToken) {
+        this.authToken = authToken;
+    }
 
     public AccountService(String url) {
         this.baseUrl = url;
@@ -30,15 +35,19 @@ public class AccountService {
         HttpEntity entity = new HttpEntity(headers);
         return entity;
     }
-//    private HttpEntity<Integer> makeEntity(int id) {
-//        HttpHeaders headers = new HttpHeaders();
-//        headers.setBearerAuth();
-//        headers.setContentType(MediaType.APPLICATION_JSON);
-//
-//        Integer requestBody = id;
-//        HttpEntity<Integer> entity = new HttpEntity<>(requestBody, headers);
-//        return entity;
-//    }
+
+
+    private HttpEntity<Transfer> makeTransferEntity(String token, Transfer transfer){
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Transfer> entity = new HttpEntity<>(transfer, headers);
+        return entity;
+    }
+
+
+
 
     public User[] listUsers(){
         User[] users = null;
@@ -62,36 +71,31 @@ public class AccountService {
         return balance;
     }
 
-//        public Transfer transferMoney(String token){
-//
-//                    Transfer amount = null;
-//            try {
-//                amount = restTemplate.exchange(baseUrl + "/transfer", HttpMethod.PUT, makeEntity(token), Transfer.class).getBody();
-//            }
-//            catch (RestClientResponseException | ResourceAccessException e) {
-//                BasicLogger.log(e.getMessage());
-//            }
-//            return amount;
-//        }
 
-    public boolean transferMoney(Transfer transfer) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Transfer> entity = new HttpEntity<>(transfer, headers);
 
-        boolean success = false;
+    public Transfer transferMoney(String token, Transfer transfer){
+        Transfer newTransfer = null;
+
         try {
-            restTemplate.put(baseUrl + "/transfer" + transfer.getTransferId(), entity);
-            success = true;
-        } catch (RestClientResponseException | ResourceAccessException e) {
+            newTransfer = restTemplate.postForObject(baseUrl + "/transfer",
+                    makeTransferEntity(token, transfer), Transfer.class);
+        }
+        catch (RestClientResponseException | ResourceAccessException e) {
             BasicLogger.log(e.getMessage());
         }
-        return success;
+        return newTransfer;
     }
 
-
-
-
-
+    public Transfer[] listTransfers(String token){
+        Transfer[] transfers = null;
+        try {
+            ResponseEntity<Transfer[]> response = restTemplate.exchange(baseUrl + "/transfer",HttpMethod.GET, makeEntity(token), Transfer[].class);
+            transfers = response.getBody();
+        }
+        catch (RestClientResponseException | ResourceAccessException e) {
+            BasicLogger.log(e.getMessage());
+        }
+        return transfers;
+    }
 
 }

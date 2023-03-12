@@ -8,6 +8,8 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Component
@@ -56,12 +58,12 @@ public class JdbcAccountDao implements AccountDao{
         if (transfer.getAccountTo() == transfer.getAccountFrom()){
             throw new IllegalArgumentException("You can't send money to yourself");
         }
-        if (viewTransAmount(transfer.getAccountFrom(), transfer.getAmount())){
+        if (!viewTransAmount(transfer.getAccountFrom(), transfer.getAmount())){
             throw new IllegalArgumentException("You CANNOT SEND MORE MONEY THAN BALANCE");
         }
         String insertSql = "INSERT INTO public.transfer(\n" +
                 "\ttransfer_type_id, transfer_status_id, account_from, account_to, amount)\n" +
-                "\tVALUES (?, ?, ?, ?, ?) RETURNING transfer_id";
+                "\tVALUES (?, ?, (SELECT account_id FROM account where user_id = ?), (SELECT account_id FROM account where user_id = ?), ?) RETURNING transfer_id";
 
         Integer newTransferId = jdbcTemplate.queryForObject(insertSql, Integer.class,
                 transfer.getTransferTypeId(), transfer.getTransferStatusId(),
@@ -108,11 +110,11 @@ public class JdbcAccountDao implements AccountDao{
         String sql = "BEGIN TRANSACTION;\n" +
                 "UPDATE account\n" +
                 "SET balance = balance - ?\n" +
-                "WHERE account_id = ?;\n" +
+                "WHERE account_id = (SELECT account_id FROM account where user_id = ?);\n" +
                 "\n" +
                 "UPDATE account\n" +
                 "SET balance = balance + ?\n" +
-                "WHERE account_id = ?;\n" +
+                "WHERE account_id = (SELECT account_id FROM account where user_id = ?);\n" +
                 "\n" +
                 "COMMIT";
 //        //BigDecimal fromAmount = subtractBalance(accountId,transferAmount);
@@ -123,7 +125,28 @@ public class JdbcAccountDao implements AccountDao{
 
     }
 
+    @Override
+    public List<Transfer> getAllTransactions(int fromAccount) {
+        List<Transfer> returnedList = new ArrayList<>();
+        String sql = "SELECT transfer_id, transfer_type_id, transfer_status_id, account_from, account_to, amount\n" +
+                "\tFROM public.transfer\n" +
+                "\twhere account_from = (select account_id from account where user_id = ?)\n" +
+                "\tor account_to = (select account_id from account where user_id = ?)";
 
+        SqlRowSet results = jdbcTemplate.queryForRowSet(sql, fromAccount, fromAccount);
+        while (results.next()){
+            Transfer transfer = new Transfer();
+            transfer.setTransferId(results.getInt("transfer_id"));
+            transfer.setTransferTypeId(results.getInt("transfer_type_id"));
+            transfer.setTransferStatusId(results.getInt("transfer_status_id"));
+            transfer.setAccountFrom(results.getInt("account_from"));
+            transfer.setAccountTo(results.getInt("account_to"));
+            transfer.setAmount(results.getBigDecimal("amount"));
+            returnedList.add(transfer);
+        }
+            return returnedList;
+
+    }
 
 
     private Account mapRowToAccount(SqlRowSet rs) {
